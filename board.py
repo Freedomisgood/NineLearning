@@ -9,37 +9,72 @@ BSIZE = 9  # board size
 EBSIZE = BSIZE + 2  # extended board size
 BVCNT = BSIZE ** 2  # vertex count
 EBVCNT = EBSIZE ** 2  # extended vertex count
+
+# 两个越界的位置规定为PASS和unvaild
 PASS = EBVCNT  # pass
 VNULL = EBVCNT + 1  # invalid position
+
 KOMI = 7.0
 dir4 = [1, EBSIZE, -1, -EBSIZE]
 diag4 = [1 + EBSIZE, EBSIZE - 1, -EBSIZE - 1, 1 - EBSIZE]
 KEEP_PREV_CNT = 2
+#12当前黑白棋
+#3456前两次黑白棋
+#7当前棋色
 FEATURE_CNT = KEEP_PREV_CNT * 2 + 3  # 7
 x_labels = "ABCDEFGHJKLMNOPQRST"
 
 
 def ev2xy(ev):
+    '''
+    e.g.ev=12==>（1,1）;
+    ev=13==>(2,1)
+    从行到列→↓
+    :param ev:
+    :return:
+    '''
     return ev % EBSIZE, ev // EBSIZE
 
 
 def xy2ev(x, y):
+    '''
+    将坐标转换成向量
+    :param x:
+    :param y:
+    :return:
+    '''
     return y * EBSIZE + x
 
 
 def rv2ev(rv):
+    '''
+    更新坐标索引起点=>0-8向量转化为1-9向量
+    12 - 108
+    :param rv: 
+    :return: 
+    '''
     if rv == BVCNT:
         return PASS
     return rv % BSIZE + 1 + (rv // BSIZE + 1) * EBSIZE
 
 
 def ev2rv(ev):
+    '''
+    将棋盘1-9向量==>0-8向量
+    :param ev:
+    :return:
+    '''
     if ev == PASS:
         return BVCNT
     return ev % EBSIZE - 1 + (ev // EBSIZE - 1) * BSIZE
 
 
 def ev2str(ev):
+    '''
+    将下棋位置转化为str
+    :param ev:
+    :return:
+    '''
     if ev >= PASS:
         return "pass"
     x, y = ev2xy(ev)
@@ -48,7 +83,7 @@ def ev2str(ev):
 
 def str2ev(v_str):
     v_str = v_str.upper()
-    if v_str == "PASS" or v_str == "RESIGN":
+    if v_str == "PASS" or v_str == "RESIGN":    # 放弃
         return PASS
     else:
         x = x_labels.find(v_str[0]) + 1
@@ -58,7 +93,7 @@ def str2ev(v_str):
 
 rv_list = [rv2ev(i) for i in range(BVCNT)]
 
-
+#并查集？
 class StoneGroup(object):
 
     def __init__(self):
@@ -96,7 +131,7 @@ class StoneGroup(object):
             for lib in self.libs:
                 self.v_atr = lib
 
-
+#棋盘
 class Board(object):
 
     def __init__(self):
@@ -145,6 +180,11 @@ class Board(object):
 
     def remove(self, v):
         # remove stone group including stone at v
+        '''
+        提子操作
+        :param v:
+        :return:
+        '''
         v_tmp = v
         while 1:
             self.remove_cnt += 1
@@ -162,6 +202,12 @@ class Board(object):
 
     def merge(self, v1, v2):
         # merge stone groups at v1 and v2
+        '''
+        并查集，将两个group合并
+        :param v1:
+        :param v2:
+        :return:
+        '''
         id_base = self.id[v1]
         id_add = self.id[v2]
         if self.sg[id_base].size < self.sg[id_add].size:
@@ -178,6 +224,11 @@ class Board(object):
         self.next[v1], self.next[v2] = self.next[v2], self.next[v1]
 
     def place_stone(self, v):
+        '''
+        落子
+        :param v: 位置0-120的一个点
+        :return:
+        '''
         self.color[v] = self.turn
         self.id[v] = v
         self.sg[self.id[v]].clear(stone=True)
@@ -201,6 +252,11 @@ class Board(object):
                 self.remove(nv)
 
     def legal(self, v):
+        '''
+        判断当前落子点是否合法
+        :param v:
+        :return:
+        '''
         if v == PASS:
             return True
         elif v == self.ko or self.color[v] != 2:
@@ -222,6 +278,12 @@ class Board(object):
                 atr_cnt[self.turn] < stone_cnt[self.turn])
 
     def eyeshape(self, v, pl):
+        '''
+        眼
+        :param v:
+        :param pl:
+        :return:
+        '''
         if v == PASS:
             return False
         for d in dir4:
@@ -245,12 +307,19 @@ class Board(object):
 
         return wedge_cnt < 2
 
+    #下棋 参数-不要填眼
     def play(self, v, not_fill_eye=True):
-
+        '''
+        走子
+        :param v: 位置
+        :param not_fill_eye: 是否不填眼
+        :return:
+        '''
         if not self.legal(v):
             return 1
         elif not_fill_eye and self.eyeshape(v, self.turn):
             return 2
+        # 如果能走，且满足眼的要求
         else:
             for i in range(KEEP_PREV_CNT - 1)[::-1]:
                 self.prev_color[i + 1] = np.copy(self.prev_color[i])
@@ -275,6 +344,10 @@ class Board(object):
         return 0
 
     def random_play(self):
+        '''
+        随机往空的位置下棋
+        :return: v: int
+        '''
         empty_list = np.where(self.color == 2)[0]
         np.random.shuffle(empty_list)
 
@@ -286,6 +359,10 @@ class Board(object):
         return PASS
 
     def score(self):
+        '''
+        计算得分
+        :return: int
+        '''
         stone_cnt = [0, 0]
         for rv in range(BVCNT):
             v = rv2ev(rv)
@@ -313,6 +390,10 @@ class Board(object):
                 break
 
     def showboard(self):
+        '''
+        输出当前的棋盘
+        :return:
+        '''
 
         def print_xlabel():
             line_str = "  "
@@ -341,6 +422,7 @@ class Board(object):
         print_xlabel()
         stderr.write("\n")
 
+    #提取棋盘特征，记忆上一次，上上次的棋路
     def feature(self):
         feature_ = np.zeros((EBVCNT, FEATURE_CNT), dtype=np.float)
         my = self.turn
@@ -355,15 +437,19 @@ class Board(object):
 
         return feature_[rv_list, :]
 
+    #哈希算状态
     def hash(self):
         return (hash(self.color.tostring()) ^
                 hash(self.prev_color[0].tostring()) ^ self.turn)
 
+
     def info(self):
         empty_list = np.where(self.color == 2)[0]
         cand_list = []
+        #找到合法且不是眼的坐标（所有可行点）
         for v in empty_list:
             if self.legal(v) and not self.eyeshape(v, self.turn):
                 cand_list.append(ev2rv(v))
         cand_list.append(ev2rv(PASS))
+        #当前状态，走子数，输出决策
         return (self.hash(), self.move_cnt, cand_list)

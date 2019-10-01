@@ -48,7 +48,7 @@ class Feed(object):
 
         return f_batch, m_batch, r_batch
 
-
+#平均梯度
 def average_gradients(tower_grads):
     average_grads = []
     for grad_and_vars in zip(*tower_grads):
@@ -81,17 +81,22 @@ def learn(lr_=1e-4, dr_=0.7, sgf_dir="sgf/", use_gpu=True, gpu_cnt=1):
         r_list = []
         m_list = []
         for gpu_idx in range(gpu_cnt):
+            #特征集
             f_list.append(tf.placeholder(
                 "float", shape=[None, BVCNT, FEATURE_CNT],
                 name="feature_%d" % gpu_idx))
+            #结果集
             r_list.append(tf.placeholder(
                 "float", shape=[None], name="result_%d" % gpu_idx))
             m_list.append(tf.placeholder(
                 "float", shape=[None, BVCNT + 1], name="move_%d" % gpu_idx))
 
+
         lr = tf.placeholder(tf.float32, shape=[], name="learning_rate")
 
+        #根据梯度动态调节学习速率
         opt = tf.train.AdamOptimizer(lr)
+        #创建一个训练模型
         dn = model.DualNetwork()
 
         # compute and apply gradients
@@ -100,25 +105,29 @@ def learn(lr_=1e-4, dr_=0.7, sgf_dir="sgf/", use_gpu=True, gpu_cnt=1):
             for gpu_idx in range(gpu_cnt):
                 with tf.device("/%s:%d" % (device_name, gpu_idx)):
 
+                    #通过网络表达出策略值和价值值
                     policy_, value_ = dn.model(
                         f_list[gpu_idx], temp=1.0, dr=dr_)
+                    #张量压缩
                     policy_ = tf.clip_by_value(policy_, 1e-6, 1)
-
+                    #获得策略损失和价值损失
                     loss_p = -tf.reduce_mean(tf.log(
                         tf.reduce_sum(tf.multiply(m_list[gpu_idx], policy_), 1)))
                     loss_v = tf.reduce_mean(
                         tf.square(tf.subtract(value_, r_list[gpu_idx])))
                     if gpu_idx == 0:
                         vars_train = tf.get_collection("vars_train")
+                    #loss_l2损失
                     loss_l2 = tf.add_n([tf.nn.l2_loss(v) for v in vars_train])
                     loss = loss_p + 0.05 * loss_v + 1e-4 * loss_l2
 
                     tower_grads.append(opt.compute_gradients(loss))
                     tf.get_variable_scope().reuse_variables()
-
+        #添加梯度，动态调节
         train_op = opt.apply_gradients(average_gradients(tower_grads))
 
         # calculate accuracy
+        # 计算精确度
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             with tf.device("/%s:0" % device_name):
                 f_acc = tf.placeholder(
@@ -137,6 +146,7 @@ def learn(lr_=1e-4, dr_=0.7, sgf_dir="sgf/", use_gpu=True, gpu_cnt=1):
 
         sess = dn.create_sess()
 
+    #读取模型训练
     # load sgf and convert to feed
     sgf_list = import_sgf(sgf_dir)
     sgf_cnt = len(sgf_list)

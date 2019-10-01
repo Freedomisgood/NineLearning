@@ -18,8 +18,9 @@ if __name__ == "__main__":
     quick = False
     random = False
     clean = False
-    use_gpu = True
+    use_gpu = False
 
+    # 只有额外加参数才会进行修改
     for arg in args:
         if arg.find("self") >= 0:
             launch_mode = 1
@@ -44,23 +45,35 @@ if __name__ == "__main__":
     elif launch_mode == 1:
         b = Board()
         if not random:
+            # 读取训练模型，声明tree对象
             tree = search.Tree("model.ckpt", use_gpu)
+            tree.main_time=main_time
 
+        # 下棋主循环
         while b.move_cnt < BVCNT * 2:
+            # 记录上一步走的棋，来判断游戏是否结束
             prev_move = b.prev_move
+
             if random:
+                # 随机下一步
                 move = b.random_play()
             elif quick:
+                #得到棋盘评价最高的点，选取该点
+                #返回两行，一行策略，一行价值
                 move = rv2ev(np.argmax(tree.evaluate(b)[0][0]))
                 b.play(move, False)
             else:
-                move, _ = tree.search(b, 0, clean=clean)
+                #通过搜索得到策略
+                move, _ = tree.search(b, 10, clean=clean,ponder=True)
                 b.play(move, False)
 
+            # 每步下完以后进行展示
             b.showboard()
             if prev_move == PASS and move == PASS:
+                # 当双方都PASS时，游戏结束，此时跳出while循环
                 break
 
+        # 计算、打印分数
         score_list = []
         b_cpy = Board()
 
@@ -77,5 +90,6 @@ if __name__ == "__main__":
             result_str = "%s+%.1f" % (winner, abs(score))
         sys.stderr.write("result: %s\n" % result_str)
 
-    else:
-        learn.learn(3e-4, 0.5, sgf_dir="sgf/", use_gpu=use_gpu, gpu_cnt=1)
+    else: # launch_mode == 2、Learn:
+        path = input('input the path of learned sgfs')
+        learn.learn(3e-4, 0.5, sgf_dir="{}".format(path), use_gpu=use_gpu, gpu_cnt=1)

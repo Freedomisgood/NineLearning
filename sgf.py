@@ -6,7 +6,7 @@ from sys import stderr
 from board import *
 import numpy as np
 
-
+#sgf棋谱文件读取
 class sgf_data(object):
 
     def __init__(self):
