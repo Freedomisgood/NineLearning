@@ -1,56 +1,56 @@
-※以下独学の際閲覧したサイトよりコピペ
+NjuptGo
 
-
-
-
-
-
+> folk from [**NineLearning**](https://github.com/blont714/NineLearning)
 
 
 # Pyaq
 
-PyaqはPythonのみで実装された囲碁プログラムです。  
-このプログラムは深層学習のチュートリアルとして、囲碁のニューラルネットワークモデルを学習させ、実際に対局することを目的としています。  
+Pyaq是仅用Python实现的Go程序。
+该程序是旨在学习和玩Go神经网络模型的深度学习教程。  
 
 ![top](https://user-images.githubusercontent.com/32036527/36086412-90005ab6-100f-11e8-912b-fdf30c61b2ef.png)  
 
-具体的には次の内容を行います。  
-- [TensorFlow](https://www.tensorflow.org/)で９路盤の棋譜を学習する
-- 学習したモデルを使って対局する
+更具体地讲，做了以下内容。
 
-囲碁の対局や深層学習のための必要最小限の実装となっており、学習・実行のすべてのコードを合わせて1000行程度です。より発展的に学習したい方はソースコードを読んでみると良いでしょう。もちろんプルリクエストも歓迎です。  
+- 使用[TensorFlow](https://www.tensorflow.org/)学习9条记录
+- 玩学习的模型
 
-## １． 準備する
+它是Go游戏和深度学习的最低必需实现，它具有约1000行的所有学习和执行代码。如果您想学习更高级的内容，请阅读源代码。当然也欢迎拉取请求。
 
-下記の環境を例に説明を進めます。  
+## 。准备
+
+以下面的环境为例进行说明。
+
 - Ubuntu 16.04
 - Python 2.7
-- TensorFlow  
-  
-TensorFlowの導入は[UbuntuにTensorFlowをインストール](https://qiita.com/yudsuzuk/items/092c38fee18e4484ece9)を参考にしてください。  
-TensorFlowでGPUを用いる場合は  
-- [CUDA Toolkit 9.0](https://developer.nvidia.com/cuda-90-download-archive)
-- [cuDNN v7.0](https://developer.nvidia.com/cudnn)
-  
-をインストールしておく必要があります。また、nVidia製の[CUDA Capability](https://developer.nvidia.com/cuda-gpus)3.5以上のグラフィックボードが必要です。  
-CUDA導入は[CUDA 8.0とcuDNN 6をUbuntu 16.04LTSにインストールする](https://qiita.com/JeJeNeNo/items/05e148a325192004e2cd)などを参考にしてください（注：リンク先の場合とバージョンが異なります）。  
+- TensorFlow
 
-次に、ソースコードをダウンロードします。  
+引进TensorFlow是[在Ubuntu安装TensorFlow](https://qiita.com/yudsuzuk/items/092c38fee18e4484ece9)请参考。
+将GPU与TensorFlow一起使用时
+
+- [CUDA工具包9.0](https://developer.nvidia.com/cuda-90-download-archive)
+- [cuDNN v7.0](https://developer.nvidia.com/cudnn)
+
+必须安装。此外，还需要nVidia生产的[CUDA Capability](https://developer.nvidia.com/cuda-gpus) 3.5或更高版本的图形板。
+有关CUDA的[安装](https://qiita.com/JeJeNeNo/items/05e148a325192004e2cd)，请参考[在Ubuntu 16.04LTS上安装的CUDA 8.0和cuDNN 6](https://qiita.com/JeJeNeNo/items/05e148a325192004e2cd)（注意：版本与链接不同）。
+
+接下来，下载源代码。
+
 ```
 $ git clone https://github.com/ymgaq/Pyaq
 ```
-または右上の「Clone or download」から手動でダウンロードすることもできます。  
-これで準備は完了です。  
+您也可以从右上角的“克隆或下载”手动下载它。
+准备完成。
 
-すぐ遊びたい人は、学習済みのデータファイル```Pyaq/pre_train/model.ckpt```を```Pyaq/```にコピーし、「4.GoGuiで対局する」に進んでください。  
+如果要立即播放，请将学习到的数据文件复制`Pyaq/pre_train/model.ckpt`到`Pyaq/`“ 4. GoGui播放”。
 
-では試しにテスト対戦が動作するかを確認してみましょう。  
+让我们检查一下测试匹配是否有效。
 
 ```
 $ ./pyaq.py --self --random
 ```
 
-次のような出力が出れば成功です。「2.学習する」に進みましょう。  
+如果获得以下输出，则说明成功。转到“ 2.学习”。
 
 ```
    A  B  C  D  E  F  G  H  J 
@@ -80,30 +80,30 @@ $ ./pyaq.py --self --random
 result: W+16.0
 ```
 
-## 2. 学習する
+## 2.学习
 
-まず、学習用ファイルを展開します。  
+首先，扩展学习文件。
 
 ```
 $ cd Pyaq
 $ unzip sgf.zip
 ```
 
-9路盤の棋譜ファイル（*.sgf）を用いて学習を行います。次のコマンドを実行すると、学習が始まります。  
+使用9个跟踪记录文件（* .sgf）进行学习。当您运行以下命令时，学习开始：
 
 ```
 $ ./pyaq.py --learn
 ```
 
-GPUなしで学習させたい場合は```--cpu```オプションを追加してください。  
-（ただし、CPUのみの学習は十分にテストされていません。）  
+如果要在没有GPU的情况下进行训练，请`--cpu`添加一个选项。
+（但是，纯CPU学习尚未经过全面测试。）
 
 ```
 $ ./pyaq.py --learn --cpu
 ```
 
-次のように学習ログが展開されます。また、log.txtにも同じ内容が記録されます。  
-GPUの性能にもよりますが、大体3〜4時間で学習が完了します。 CPUのみの場合は3日程度かかります。  
+学习日志扩展如下：相同的内容也记录在log.txt中。
+根据GPU的性能，学习将在大约3-4小时内完成。仅对于CPU，大约需要3天。
 
 ```
 imported 34572 sgf files.
@@ -141,20 +141,20 @@ progress: 2.60[%] 15.5[sec]
 progress: 2.70[%] 13.4[sec]
 ```
 
-2.5%ごとにtestデータの評価を行います。 ```policy```は棋譜の次の手とニューラルネットワークが出力する手との一致率、```value```は棋譜の勝敗とネットワークが出力する評価値（-1~+1）の誤差（Mean Squared Error）を表します。 最終的に、testデータでpolicyが57%、valueが0.36程度になるようです。  
-学習が完了すると、パラメータファイル```model.ckpt```が保存されます。  
+每2.5％对测试数据进行评估。`policy`是游戏分数的下一手和神经网络输出的一手之间的匹配率，并且`value`是分数分数与网络输出的评估值（-1至+1）之间的误差（均方误差）。最后，在测试数据中似乎策略为57％，值约为0.36。
+学习完成后，将`model.ckpt`保存参数文件。
 
-ネットワークモデルの```BLOCK_CNT```や```FILTER_CNT```、または盤面の```KEEP_PREV_CNT```などを変更したり、モデルの形を変えたり、オリジナルの棋譜データを使用することで、より強力なパラメータを生成できる可能性があります。 興味がある方は、あなただけの最強のネットワーク作りに挑戦してみましょう。  
+网络模型的`BLOCK_CNT`和`FILTER_CNT`或板，`KEEP_PREV_CNT`或改变，如改变该模型的形状，通过使用原始游戏记录数据，则可以产生更有力的参数。如果您有兴趣，请尝试为您创建最强大的网络。
 
-## 3. 自己対戦をさせてみる（コンソール）
+## 3.让我们玩自我比赛（控制台）
 
-コンソール上で学習したモデルを使って、まず探索なしの自己対戦をさせてみます。  
+使用在控制台上学习的模型，让我们首先进行不搜索的自我匹配。
 
 ```
 $ ./pyaq.py --self --quick --cpu
 ```
 
-探索なしの場合の対戦結果が得られます。  
+无需搜索即可获得战斗结果。
 
 ```
    A  B  C  D  E  F  G  H  J 
@@ -197,19 +197,19 @@ $ ./pyaq.py --self --quick --cpu
 result: Draw
 ```
 
-次に、探索ありの自己対戦をしてみましょう。  
+接下来，让我们与搜索进行自我匹配。
 
 ```
 $ ./pyaq.py --self --byoyomi=3
 ```
 
-GPUなしの場合は```--cpu```オプションを追加してください。  
+如果没有GPU，则`--cpu`添加一个选项。
 
 ```
 $ ./pyaq.py --self --byoyomi=3 --cpu
 ```
 
-１手３秒で対局が進行します。  
+游戏每步进行3秒。
 
 ```
 move count=3: left time=0.0[sec] evaluated=104
@@ -233,41 +233,51 @@ move count=3: left time=0.0[sec] evaluated=104
    A  B  C  D  E  F  G  H  J 
 ```
 
-思考ログの内容は次の通りです。  
-- ```move count``` 手数
-- ```left time``` 残り時間
-- ```evaluated``` この思考で評価された盤面の数
-- ```move``` 候補手
-- ```count``` 探索回数
-- ```rate``` 手番側からみた勝率
-- ```value``` 候補手を着手した場合の評価値
-- ```prob``` 候補手の確率
-- ```best sequence``` 候補手の後の読み筋
+思想记录的内容如下。
 
-また、pyaq.pyのコマンドラインオプションは以下の通りです。  
-- ```--cpu``` CPUのみを使用する
-- ```--learn``` 棋譜から学習する
-- ```--self``` コンソールで自己対戦を行う
-- ```--random``` ランダムに着手する
-- ```--quick``` 確率最大の手を選択する（探索しない）
-- ```--clean``` 最後まで打ち切る（探索ありの場合のみ）
-- ```--main_time=600``` 持ち時間 10分を設定
-- ```--byoyomi=10``` 秒読み 10秒を設定
+- `move count` 麻烦
+- `left time` 剩余时间
+- `evaluated` 以此想法评估的董事会数量
+- `move` 候选手
+- `count` 搜索数
+- `rate` 手表方面的胜率
+- `value` 开始应聘时的评估值
+- `prob` 候选手的概率
+- `best sequence` 候选手后阅读肌肉
 
-## 4. GoGuiで対局する
+pyaq.py的命令行选项如下。
 
-学習をしていない人は、学習済みのデータファイル```Pyaq/pre_train```にある```model.ckpt```を```Pyaq/```にコピーしてください。  
+- `--cpu` 仅使用CPU
+- `--learn` 从游戏记录中学习
+- `--self` 在控制台上进行自我比对
+- `--random` 随机开始
+- `--quick` 选择可能性最高的手（不搜索）
+- `--clean` 中止（仅在搜索时）
+- `--main_time=600` 设定时间10分钟
+- `--byoyomi=10` 将倒数设为10秒
 
-[GoGui](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)を使ってGUIでの対局を行います。  
-メニュー＞対局＞碁盤サイズを「9」に設定した後、
-メニュー＞プログラム＞新規プログラムから「コマンド」と「ワーキングディレクトリ」を登録します。  
+## 4.玩GoGui
+
+人谁不学习，学到的数据文件`Pyaq/pre_train`中`model.ckpt`的`Pyaq/`被复制到请。
+
+使用[GoGui](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)与GUI一起[玩](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)。
+将菜单>游戏>面板尺寸设置为“ 9”后，从菜单>程序>新程序中注册“命令”和“工作目录”。
 
 ![resister](https://user-images.githubusercontent.com/32036527/36086431-acdf1168-100f-11e8-9127-adc138b3fa3d.png)  
 
-起動したらGUIで対局することができます。 思考ログはメニュー＞ツール＞GTPシェルから見ることができます。 
+启动后，您可以使用GUI。可以从菜单>工具> GTP Shell中查看思想日志。
 
 ![top](https://user-images.githubusercontent.com/32036527/36086412-90005ab6-100f-11e8-912b-fdf30c61b2ef.png)   
 
-## ライセンス
-[MITライセンス](https://github.com/ymgaq/Pyaq/blob/master/LICENSE)  
-Author: [Yu Yamaguchi](https://twitter.com/ymg_aq)  
+## License
+[MIT License](https://github.com/ymgaq/Pyaq/blob/master/LICENSE)
+
+Author:
+
+<a href="https://github.com/Freedomisgood">
+    <img src="https://avatars3.githubusercontent.com/u/31088082?s=40&v=4" width="50px">
+</a><a href="https://github.com/HotPotAndMe">
+    <img src="https://avatars3.githubusercontent.com/u/44315782?s=400&v=4" width="50px">
+</a>
+
+Thanks to origin Author: [Yu Yamaguchi](https://twitter.com/ymg_aq)
