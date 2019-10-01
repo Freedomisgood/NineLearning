@@ -1,9 +1,11 @@
-NjuptGo
+# NjuptGo
 
 > folk from [**NineLearning**](https://github.com/blont714/NineLearning)
+>
+> 实现9路幻影围棋的基础AI
 
 
-# Pyaq
+## Pyaq
 
 Pyaq是仅用Python实现的Go程序。
 该程序是旨在学习和玩Go神经网络模型的深度学习教程。  
@@ -17,7 +19,7 @@ Pyaq是仅用Python实现的Go程序。
 
 它是Go游戏和深度学习的最低必需实现，它具有约1000行的所有学习和执行代码。如果您想学习更高级的内容，请阅读源代码。当然也欢迎拉取请求。
 
-## 。准备
+### 1.准备
 
 以下面的环境为例进行说明。
 
@@ -42,7 +44,7 @@ $ git clone https://github.com/ymgaq/Pyaq
 您也可以从右上角的“克隆或下载”手动下载它。
 准备完成。
 
-如果要立即播放，请将学习到的数据文件复制`Pyaq/pre_train/model.ckpt`到`Pyaq/`“ 4. GoGui播放”。
+如果要立即运行，请将学习到的数据文件复制`Pyaq/pre_train/model.ckpt`到`Pyaq/`“，并使用[ GoGui。](#4.在GoGui上玩)
 
 让我们检查一下测试匹配是否有效。
 
@@ -50,7 +52,7 @@ $ git clone https://github.com/ymgaq/Pyaq
 $ ./pyaq.py --self --random
 ```
 
-如果获得以下输出，则说明成功。转到“ 2.学习”。
+如果获得以下输出，则说明成功。转到“ [2.学习](#2.学习)”。
 
 ```
    A  B  C  D  E  F  G  H  J 
@@ -80,7 +82,7 @@ $ ./pyaq.py --self --random
 result: W+16.0
 ```
 
-## 2.学习
+### 2.学习
 
 首先，扩展学习文件。
 
@@ -146,7 +148,7 @@ progress: 2.70[%] 13.4[sec]
 
 网络模型的`BLOCK_CNT`和`FILTER_CNT`或板，`KEEP_PREV_CNT`或改变，如改变该模型的形状，通过使用原始游戏记录数据，则可以产生更有力的参数。如果您有兴趣，请尝试为您创建最强大的网络。
 
-## 3.让我们玩自我比赛（控制台）
+### 3.让我们玩自我比赛（控制台）
 
 使用在控制台上学习的模型，让我们首先进行不搜索的自我匹配。
 
@@ -235,32 +237,32 @@ move count=3: left time=0.0[sec] evaluated=104
 
 思想记录的内容如下。
 
-- `move count` 麻烦
+- `move count` 移动计数
 - `left time` 剩余时间
-- `evaluated` 以此想法评估的董事会数量
-- `move` 候选手
+- `evaluated` 以此想法评估的board数量
+- `move` 选手步数
 - `count` 搜索数
-- `rate` 手表方面的胜率
-- `value` 开始应聘时的评估值
-- `prob` 候选手的概率
-- `best sequence` 候选手后阅读肌肉
+- `rate` 选手的胜率
+- `value` 选手开始时的评估值
+- `prob` 选手走棋的概率
+- `best sequence` 最佳顺序
 
 pyaq.py的命令行选项如下。
 
 - `--cpu` 仅使用CPU
 - `--learn` 从游戏记录中学习
-- `--self` 在控制台上进行自我比对
-- `--random` 随机开始
-- `--quick` 选择可能性最高的手（不搜索）
+- `--self` 在控制台上进行自我比试
+- `--random` 随机play
+- `--quick` 选择可能性最高的（不搜索）
 - `--clean` 中止（仅在搜索时）
-- `--main_time=600` 设定时间10分钟
-- `--byoyomi=10` 将倒数设为10秒
+- `--main_time=600` 设定总时间10分钟
+- `--byoyomi=10` 将读数时间设为10秒
 
-## 4.玩GoGui
+### 4.在GoGui上玩
 
 人谁不学习，学到的数据文件`Pyaq/pre_train`中`model.ckpt`的`Pyaq/`被复制到请。
 
-使用[GoGui](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)与GUI一起[玩](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)。
+使用[GoGui](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)与AI一起[玩](https://sourceforge.net/projects/gogui/files/gogui/1.4.9/)。
 将菜单>游戏>面板尺寸设置为“ 9”后，从菜单>程序>新程序中注册“命令”和“工作目录”。
 
 ![resister](https://user-images.githubusercontent.com/32036527/36086431-acdf1168-100f-11e8-9127-adc138b3fa3d.png)  
@@ -269,7 +271,7 @@ pyaq.py的命令行选项如下。
 
 ![top](https://user-images.githubusercontent.com/32036527/36086412-90005ab6-100f-11e8-912b-fdf30c61b2ef.png)   
 
-## License
+### License
 [MIT License](https://github.com/ymgaq/Pyaq/blob/master/LICENSE)
 
 Author:
