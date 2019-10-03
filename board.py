@@ -10,18 +10,24 @@ EBSIZE = BSIZE + 2  # extended board size
 BVCNT = BSIZE ** 2  # vertex count
 EBVCNT = EBSIZE ** 2  # extended vertex count
 
-# 两个越界的位置规定为PASS和unvaild
-PASS = EBVCNT  # pass
-VNULL = EBVCNT + 1  # invalid position
-
+# 两个越界的位置规定为PASS-81和unvaild-82
+# pass
+PASS = EBVCNT
+# invalid position
+VNULL = EBVCNT + 1
+# 贴目
 KOMI = 7.0
+# v的(右下左上)四个位置
 dir4 = [1, EBSIZE, -1, -EBSIZE]
+# v的(四个角)位置
 diag4 = [1 + EBSIZE, EBSIZE - 1, -EBSIZE - 1, 1 - EBSIZE]
+
 KEEP_PREV_CNT = 2
 #12当前黑白棋
 #3456前两次黑白棋
 #7当前棋色
 FEATURE_CNT = KEEP_PREV_CNT * 2 + 3  # 7
+
 x_labels = "ABCDEFGHJKLMNOPQRST"
 
 
@@ -82,6 +88,11 @@ def ev2str(ev):
 
 
 def str2ev(v_str):
+    '''
+    字符形式信息转换为ev
+    :param v_str:
+    :return:
+    '''
     v_str = v_str.upper()
     if v_str == "PASS" or v_str == "RESIGN":    # 放弃
         return PASS
@@ -97,10 +108,10 @@ rv_list = [rv2ev(i) for i in range(BVCNT)]
 class StoneGroup(object):
 
     def __init__(self):
-        self.lib_cnt = VNULL  # liberty count
-        self.size = VNULL  # stone size
-        self.v_atr = VNULL  # liberty position if in Atari
-        self.libs = set()  # set of liberty positions
+        self.lib_cnt = VNULL  # liberty count(气的数目)
+        self.size = VNULL  # stone size(该气的大小_包含棋子数)
+        self.v_atr = VNULL  # liberty position if in Atari(在叫吃情况下的气)
+        self.libs = set()  # set of liberty positions(气集合)
 
     def clear(self, stone=True):
         # clear as placed stone or empty
@@ -133,31 +144,40 @@ class StoneGroup(object):
 
 #棋盘
 class Board(object):
-
+    '''
+    记录比赛信息的量
+    注意: 没有全局变量记录当前局自己的颜色
+    '''
     def __init__(self):
         # 1-d array ([EBVCNT]) of stones or empty or exterior
+        # 一维阵列([EBVCNT])的棋色、空、边界
         # 0: white 1: black
-        # 2: empty 3: exterior
+        # 2: empty 3: exterior(越界、边界)
         self.color = np.full(EBVCNT, 3)
         self.sg = [StoneGroup() for _ in range(EBVCNT)]  # stone groups
         self.clear()
 
     def clear(self):
-        self.color[rv_list] = 2  # empty
+        self.color[rv_list] = 2  # 将能下子的地方标记为空
         self.id = np.arange(EBVCNT)  # id of stone group
         self.next = np.arange(EBVCNT)  # next position in the same group
         for i in range(EBVCNT):
             self.sg[i].clear(stone=False)
         self.prev_color = [np.copy(self.color) for _ in range(KEEP_PREV_CNT)]
 
-        self.ko = VNULL  # illegal position due to Ko
-        self.turn = 1  # black
+        self.ko = VNULL  # illegal position due to Ko(劫)
+        self.turn = 1  # black first
         self.move_cnt = 0  # move count
         self.prev_move = VNULL  # previous move
-        self.remove_cnt = 0  # removed stones count
-        self.history = []
+        self.remove_cnt = 0  # removed stones count(移掉子的数目)
+        self.history = []   # 该局历史
 
     def copy(self, b_cpy):
+        '''
+        实现对象的拷贝功能
+        :param b_cpy: Board对象
+        :return:
+        '''
         b_cpy.color = np.copy(self.color)
         b_cpy.id = np.copy(self.id)
         b_cpy.next = np.copy(self.next)
@@ -257,18 +277,22 @@ class Board(object):
         :param v:
         :return:
         '''
+        # pass为合法
         if v == PASS:
             return True
+        # 如果不能空,则false
         elif v == self.ko or self.color[v] != 2:
             return False
 
         stone_cnt = [0, 0]
         atr_cnt = [0, 0]
-        for d in dir4:
+        for d in dir4:  # [1, EBSIZE, -1, -EBSIZE]
             nv = v + d
             c = self.color[nv]
+            # 如果有任意一个方向空.即不是眼,那么就可以下
             if c == 2:
                 return True
+            # 计算是否为眼
             elif c <= 1:
                 stone_cnt[c] += 1
                 if self.sg[self.id[nv]].lib_cnt == 1:
@@ -279,26 +303,30 @@ class Board(object):
 
     def eyeshape(self, v, pl):
         '''
-        眼
-        :param v:
-        :param pl:
+        当前这步能否形成眼
+        :param v: 位置
+        :param pl: self.turn,当前player的颜色
+        # int(pl == 0) 判断是否为pl相对颜色:如果传1黑,那么就是0白.
         :return:
         '''
+        # 如果pass那么一定不能构成眼
         if v == PASS:
             return False
-        for d in dir4:
+
+        for d in dir4:      # [1, EBSIZE, -1, -EBSIZE]
             c = self.color[v + d]
+            # 一旦有位置是空的or,那么没有形成眼
             if c == 2 or c == int(pl == 0):
                 return False
 
         diag_cnt = [0, 0, 0, 0]
-        for d in diag4:
+        for d in diag4:  # [1 + EBSIZE, EBSIZE - 1, -EBSIZE - 1, 1 - EBSIZE]
             nv = v + d
             diag_cnt[self.color[nv]] += 1
 
         wedge_cnt = diag_cnt[int(pl == 0)] + int(diag_cnt[3] > 0)
         if wedge_cnt == 2:
-            for d in diag4:
+            for d in diag4:  # [1 + EBSIZE, EBSIZE - 1, -EBSIZE - 1, 1 - EBSIZE]
                 nv = v + d
                 if self.color[nv] == int(pl == 0) and \
                         self.sg[self.id[nv]].lib_cnt == 1 and \
@@ -307,7 +335,6 @@ class Board(object):
 
         return wedge_cnt < 2
 
-    #下棋 参数-不要填眼
     def play(self, v, not_fill_eye=True):
         '''
         走子
@@ -336,9 +363,10 @@ class Board(object):
                         self.sg[id].size == 1:
                     self.ko = self.sg[id].v_atr
 
+        # 一方下完后进行记录,并切换下子方
         self.prev_move = v
         self.history.append(v)
-        self.turn = int(self.turn == 0)
+        self.turn = int(self.turn == 0) # 实际是一个取反的作用
         self.move_cnt += 1
 
         return 0
@@ -351,10 +379,12 @@ class Board(object):
         empty_list = np.where(self.color == 2)[0]
         np.random.shuffle(empty_list)
 
+        # 如果有子可以下
         for v in empty_list:
             if self.play(v, True) == 0:
                 return v
 
+        # 没子可下,那么PASS
         self.play(PASS)
         return PASS
 
@@ -380,12 +410,18 @@ class Board(object):
         return stone_cnt[1] - stone_cnt[0] - KOMI
 
     def rollout(self, show_board=False):
+        '''
+        模拟随机
+        :param show_board: 是否显示棋盘
+        :return:
+        '''
         while self.move_cnt < EBVCNT * 2:
             prev_move = self.prev_move
             move = self.random_play()
             if show_board and move != PASS:
                 stderr.write("\nmove count=%d\n" % self.move_cnt)
                 self.showboard()
+            # 当局游戏结束的条件
             if prev_move == PASS and move == PASS:
                 break
 
@@ -422,8 +458,11 @@ class Board(object):
         print_xlabel()
         stderr.write("\n")
 
-    #提取棋盘特征，记忆上一次，上上次的棋路
     def feature(self):
+        '''
+        提取棋盘特征，记忆上一次，上上次的棋路
+        :return:
+        '''
         feature_ = np.zeros((EBVCNT, FEATURE_CNT), dtype=np.float)
         my = self.turn
         opp = int(self.turn == 0)
@@ -437,8 +476,12 @@ class Board(object):
 
         return feature_[rv_list, :]
 
-    #哈希算状态
+
     def hash(self):
+        '''
+        哈希算状态
+        :return:
+        '''
         return (hash(self.color.tostring()) ^
                 hash(self.prev_color[0].tostring()) ^ self.turn)
 

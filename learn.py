@@ -50,6 +50,11 @@ class Feed(object):
 
 #平均梯度
 def average_gradients(tower_grads):
+    '''
+    平均梯度法
+    :param tower_grads:
+    :return:
+    '''
     average_grads = []
     for grad_and_vars in zip(*tower_grads):
 
@@ -65,6 +70,11 @@ def average_gradients(tower_grads):
 
 
 def stdout_log(str):
+    '''
+    log日志输出
+    :param str: 文本
+    :return:
+    '''
     stdout.write(str)
     log_file = open("log.txt", "a")
     log_file.write(str)
@@ -72,7 +82,15 @@ def stdout_log(str):
 
 
 def learn(lr_=1e-4, dr_=0.7, sgf_dir="sgf/", use_gpu=True, gpu_cnt=1):
+    '''
 
+    :param lr_: 学习率
+    :param dr_: # 梯度下降率 #
+    :param sgf_dir: 棋谱位置
+    :param use_gpu: 是否使用GPU
+    :param gpu_cnt: GPU数目
+    :return:
+    '''
     device_name = "gpu" if use_gpu else "cpu"
     with tf.get_default_graph().as_default(), tf.device("/cpu:0"):
 

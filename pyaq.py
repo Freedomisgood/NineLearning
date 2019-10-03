@@ -13,12 +13,12 @@ if __name__ == "__main__":
     args = sys.argv
 
     launch_mode = 0  # 0: gtp, 1: self, 2: learn
-    byoyomi = 5.0
-    main_time = 0.0
-    quick = False
-    random = False
-    clean = False
-    use_gpu = False
+    byoyomi = 5.0   # 读秒
+    main_time = 0.0 # 总时间
+    quick = False   # 快速走子设置
+    random = False  # 随机落子设置
+    clean = False   # GTP通信相关设置
+    use_gpu = False # 使用GPU蛇者
 
     # 只有额外加参数才会进行修改
     for arg in args:

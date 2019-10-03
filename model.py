@@ -131,6 +131,11 @@ class DualNetwork(object):
         return policy, value
 
     def create_sess(self, ckpt_path=""):
+        '''
+        创建会话
+        :param ckpt_path: 模型保存位置
+        :return:
+        '''
         with tf.get_default_graph().as_default():
 
             sess_ = tf.Session(config=tf.ConfigProto(
@@ -153,7 +158,7 @@ class DualNetwork(object):
 
     def save_vars(self, sess_, ckpt_path="model.ckpt"):
         '''
-        保存变量
+        保存训练变量信息
         :param sess_: tf会话
         :param ckpt_path: 参数路径
         :return:

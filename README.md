@@ -38,7 +38,7 @@ Pyaq是仅用Python实现的Go程序。
 
 接下来，下载源代码。
 
-```
+```shell
 $ git clone https://github.com/ymgaq/Pyaq
 ```
 您也可以从右上角的“克隆或下载”手动下载它。
@@ -48,7 +48,7 @@ $ git clone https://github.com/ymgaq/Pyaq
 
 让我们检查一下测试匹配是否有效。
 
-```
+```shell
 $ ./pyaq.py --self --random
 ```
 
@@ -86,21 +86,21 @@ result: W+16.0
 
 首先，扩展学习文件。
 
-```
+```shell
 $ cd Pyaq
 $ unzip sgf.zip
 ```
 
 使用9个跟踪记录文件（* .sgf）进行学习。当您运行以下命令时，学习开始：
 
-```
+```shell
 $ ./pyaq.py --learn
 ```
 
 如果要在没有GPU的情况下进行训练，请`--cpu`添加一个选项。
 （但是，纯CPU学习尚未经过全面测试。）
 
-```
+```shell
 $ ./pyaq.py --learn --cpu
 ```
 
@@ -152,7 +152,7 @@ progress: 2.70[%] 13.4[sec]
 
 使用在控制台上学习的模型，让我们首先进行不搜索的自我匹配。
 
-```
+```shell
 $ ./pyaq.py --self --quick --cpu
 ```
 
@@ -201,13 +201,13 @@ result: Draw
 
 接下来，让我们与搜索进行自我匹配。
 
-```
+```shell
 $ ./pyaq.py --self --byoyomi=3
 ```
 
 如果没有GPU，则`--cpu`添加一个选项。
 
-```
+```shell
 $ ./pyaq.py --self --byoyomi=3 --cpu
 ```
 
@@ -283,3 +283,11 @@ Author:
 </a>
 
 Thanks to origin Author: [Yu Yamaguchi](https://twitter.com/ymg_aq)
+
+## 附录:
+### 围棋英文术语:
+
+- 贴目 (komi)
+- 气 (*liberty*) 
+- 叫吃 (*atari*) 
+- 劫(Ko)
