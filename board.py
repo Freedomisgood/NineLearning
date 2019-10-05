@@ -110,12 +110,12 @@ class StoneGroup(object):
     def __init__(self):
         self.lib_cnt = VNULL  # liberty count(气的数目)
         self.size = VNULL  # stone size(该气的大小_包含棋子数)
-        self.v_atr = VNULL  # liberty position if in Atari(在叫吃情况下的气)
+        self.v_atr = VNULL  # liberty position if in Atari(在叫吃情况下的气-->劫)
         self.libs = set()  # set of liberty positions(气集合)
 
     def clear(self, stone=True):
         # clear as placed stone or empty
-        self.lib_cnt = 0 if stone else VNULL
+        self.lib_cnt = 0 if stone else VNULL   # 0或者121
         self.size = 1 if stone else VNULL
         self.v_atr = VNULL
         self.libs.clear()
@@ -134,6 +134,11 @@ class StoneGroup(object):
             self.lib_cnt -= 1
 
     def merge(self, other):
+        '''
+        合并两个气
+        :param other: StoneGroup对象
+        :return:
+        '''
         # merge with aother stone group
         self.libs |= other.libs
         self.lib_cnt = len(self.libs)
@@ -141,6 +146,7 @@ class StoneGroup(object):
         if self.lib_cnt == 1:
             for lib in self.libs:
                 self.v_atr = lib
+                # 集合是升序的,所以会是最后一个
 
 #棋盘
 class Board(object):
@@ -159,7 +165,7 @@ class Board(object):
 
     def clear(self):
         self.color[rv_list] = 2  # 将能下子的地方标记为空
-        self.id = np.arange(EBVCNT)  # id of stone group
+        self.id = np.arange(EBVCNT)  # id of stone group(属于哪团气的)
         self.next = np.arange(EBVCNT)  # next position in the same group
         for i in range(EBVCNT):
             self.sg[i].clear(stone=False)
@@ -206,7 +212,7 @@ class Board(object):
         :return:
         '''
         v_tmp = v
-        while 1:
+        while True:
             self.remove_cnt += 1
             self.color[v_tmp] = 2  # empty
             self.id[v_tmp] = v_tmp  # reset id
@@ -230,12 +236,13 @@ class Board(object):
         '''
         id_base = self.id[v1]
         id_add = self.id[v2]
+        # 将add_group加到base_group
         if self.sg[id_base].size < self.sg[id_add].size:
             id_base, id_add = id_add, id_base  # swap
         self.sg[id_base].merge(self.sg[id_add])
 
         v_tmp = id_add
-        while 1:
+        while True:
             self.id[v_tmp] = id_base  # change id to id_base
             v_tmp = self.next[v_tmp]
             if v_tmp == id_add:
@@ -245,7 +252,7 @@ class Board(object):
 
     def place_stone(self, v):
         '''
-        落子
+        落子,并更新board其他信息,判断是否连气、提子
         :param v: 位置0-120的一个点
         :return:
         '''
@@ -411,7 +418,7 @@ class Board(object):
 
     def rollout(self, show_board=False):
         '''
-        模拟随机
+        模拟随机下棋进行一句游戏
         :param show_board: 是否显示棋盘
         :return:
         '''
@@ -439,7 +446,8 @@ class Board(object):
 
         print_xlabel()
 
-        for y in range(1, BSIZE + 1)[::-1]:  # 9, 8, ..., 1
+        # 9, 8, ..., 1行:[ 9 .  .  .  .  .  .  .  .  .  9]
+        for y in range(1, BSIZE + 1)[::-1]:
             line_str = str(y) if y >= 10 else " " + str(y)
             for x in range(1, BSIZE + 1):
                 v = xy2ev(x, y)
@@ -452,6 +460,7 @@ class Board(object):
                     else:
                         x_str = " " + stone_str + " "
                 line_str += x_str
+            #
             line_str += str(y) if y >= 10 else " " + str(y)
             stderr.write(line_str + "\n")
 
@@ -467,13 +476,18 @@ class Board(object):
         my = self.turn
         opp = int(self.turn == 0)
 
+        # 第一列
         feature_[:, 0] = (self.color == my)
+        # 第二列
         feature_[:, 1] = (self.color == opp)
+        # (0+1)*2==3列、4开始--->(1+1)*2 + 1==5列、6结束
         for i in range(KEEP_PREV_CNT):
             feature_[:, (i + 1) * 2] = (self.prev_color[i] == my)
             feature_[:, (i + 1) * 2 + 1] = (self.prev_color[i] == opp)
+        # 第7列
         feature_[:, FEATURE_CNT - 1] = my
 
+        # 返回81行
         return feature_[rv_list, :]
 
 
@@ -496,3 +510,8 @@ class Board(object):
         cand_list.append(ev2rv(PASS))
         #当前状态，走子数，输出决策
         return (self.hash(), self.move_cnt, cand_list)
+
+
+if __name__ == '__main__':
+    b = Board()
+    b.showboard()
