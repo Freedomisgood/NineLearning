@@ -32,7 +32,7 @@ class Node(object):
     def init_branch(self):
         # 动作的状态空间
         self.move = np.full(BVCNT + 1, VNULL)
-        # 概率
+        # 先验概率
         self.prob = np.full(BVCNT + 1, 0.0)
         # 价值
         self.value = np.full(BVCNT + 1, 0.0)
@@ -40,6 +40,7 @@ class Node(object):
         self.value_win = np.full(BVCNT + 1, 0.0)
         # 被访过的次数
         self.visit_cnt = np.full(BVCNT + 1, 0)
+        # 配合Board的id属性一起使用==>子结点
         self.next_id = np.full(BVCNT + 1, -1)
         # dtype is required only on Windows.
         self.next_hash = np.full(BVCNT + 1, -1, dtype=np.int64)
@@ -79,14 +80,14 @@ class Tree(object):
         with tf.get_default_graph().as_default(), tf.device("/%s:0" % device_name):
             dn = model.DualNetwork()
             self.x = tf.placeholder("float", shape=[None, BVCNT, FEATURE_CNT])
-            self.pv = dn.model(self.x, temp=0.7, dr=1.0)
+            self.pv = dn.model(self.x, temp=0.7, dr=1.0) # return policy, value
             self.sess = dn.create_sess(ckpt_path)
 
     def evaluate(self, b):
         '''
         判断当前局势
         :param b: borad()
-        :return:
+        :return: policy, value
         '''
         return self.sess.run(self.pv,
                              feed_dict={self.x: np.reshape(b.feature(), (1, BVCNT, 7))})

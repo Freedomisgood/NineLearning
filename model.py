@@ -67,6 +67,13 @@ class DualNetwork(object):
         return tf.nn.relu(tf.add(conv1, x_add))
 
     def model(self, x, temp=1.0, dr=1.0):
+        '''
+        模型输出结果
+        :param x:
+        :param temp:
+        :param dr:
+        :return: return policy, value
+        '''
         hi = []
 
         prev_h = tf.reshape(x, [-1, BSIZE, BSIZE, FEATURE_CNT])

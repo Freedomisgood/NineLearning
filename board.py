@@ -159,11 +159,20 @@ class Board(object):
         # 一维阵列([EBVCNT])的棋色、空、边界
         # 0: white 1: black
         # 2: empty 3: exterior(越界、边界)
+
+        # color保存的是对战棋盘上可以直接观测到的信息
         self.color = np.full(EBVCNT, 3)
+        # 对棋盘上气的统计
         self.sg = [StoneGroup() for _ in range(EBVCNT)]  # stone groups
+
+        # 除了这两个量以外, 其他的量(clear函数中定义的)都是一些算法中需要记录、使用到的值
         self.clear()
 
     def clear(self):
+        '''
+        实现初始化、重置
+        :return: None
+        '''
         self.color[rv_list] = 2  # 将能下子的地方标记为空
         self.id = np.arange(EBVCNT)  # id of stone group(属于哪团气的)
         self.next = np.arange(EBVCNT)  # next position in the same group
@@ -256,24 +265,28 @@ class Board(object):
         :param v: 位置0-120的一个点
         :return:
         '''
+        # 关键的还是self.color这个量,保存的是棋盘的信息
         self.color[v] = self.turn
         self.id[v] = v
         self.sg[self.id[v]].clear(stone=True)
         for d in dir4:
             nv = v + d
             if self.color[nv] == 2:
-                self.sg[self.id[v]].add(nv)  # add liberty
+                self.sg[self.id[v]].add(nv)  # add liberty 增加该子的气数
             else:
-                self.sg[self.id[nv]].sub(v)  # remove liberty
+                self.sg[self.id[nv]].sub(v)  # remove liberty 减少该子的气数
+
         # merge stone groups
         for d in dir4:
             nv = v + d
             if self.color[nv] == self.turn and self.id[nv] != self.id[v]:
                 self.merge(v, nv)
+
         # remove opponent's stones
         self.remove_cnt = 0
         for d in dir4:
             nv = v + d
+            # 是否为对方的棋子 且 对方该棋子没有气 了
             if self.color[nv] == int(self.turn == 0) and \
                     self.sg[self.id[nv]].lib_cnt == 0:
                 self.remove(nv)
@@ -287,7 +300,7 @@ class Board(object):
         # pass为合法
         if v == PASS:
             return True
-        # 如果不能空,则false
+        # 如果不为空、或者为劫(即劫争),则false
         elif v == self.ko or self.color[v] != 2:
             return False
 
@@ -310,36 +323,43 @@ class Board(object):
 
     def eyeshape(self, v, pl):
         '''
-        当前这步能否形成眼
+        当前v位置能否形成眼 or 是否会填眼?
         :param v: 位置
         :param pl: self.turn,当前player的颜色
         # int(pl == 0) 判断是否为pl相对颜色:如果传1黑,那么就是0白.
-        :return:
+        :return: 是否能构成:bool
         '''
         # 如果pass那么一定不能构成眼
         if v == PASS:
             return False
-
         for d in dir4:      # [1, EBSIZE, -1, -EBSIZE]
             c = self.color[v + d]
-            # 一旦有位置是空的or,那么没有形成眼
+            # 一旦有位置是空的 or 对方的棋子? ,那么就不能形成眼==>也肯定填不了眼
+            # ==> 如果一个子的四周有空的,那么这一步将不能构成眼==>也肯定填不了眼
+            # --> 如果一个子的四周有对方的子的话,那么这步也肯定构成不了眼
             if c == 2 or c == int(pl == 0):
                 return False
 
+        # 在v位置大多都是己方子的时候，才可能形成眼
+        # 记录四个角的情况，[白，黑，空，边界]
         diag_cnt = [0, 0, 0, 0]
         for d in diag4:  # [1 + EBSIZE, EBSIZE - 1, -EBSIZE - 1, 1 - EBSIZE]
             nv = v + d
             diag_cnt[self.color[nv]] += 1
 
+        # 对方的子数 + 边界的个数
         wedge_cnt = diag_cnt[int(pl == 0)] + int(diag_cnt[3] > 0)
         if wedge_cnt == 2:
             for d in diag4:  # [1 + EBSIZE, EBSIZE - 1, -EBSIZE - 1, 1 - EBSIZE]
                 nv = v + d
+                # 1. 为对方的棋子
+                # 2. 气数为1
+                # 3. 顶点不为劫
                 if self.color[nv] == int(pl == 0) and \
                         self.sg[self.id[nv]].lib_cnt == 1 and \
                         self.sg[self.id[nv]].v_atr != self.ko:
                     return True
-
+        # 小于2为眼,如贴边、贴角
         return wedge_cnt < 2
 
     def play(self, v, not_fill_eye=True):
@@ -349,6 +369,9 @@ class Board(object):
         :param not_fill_eye: 是否不填眼
         :return:
         '''
+        # 异常操作
+        # 不合法返回1
+        # 不想要填眼但是填了眼 返回2
         if not self.legal(v):
             return 1
         elif not_fill_eye and self.eyeshape(v, self.turn):
@@ -362,12 +385,18 @@ class Board(object):
             if v == PASS:
                 self.ko = VNULL
             else:
+                # 对棋盘的更新都在place_stone这个函数中
                 self.place_stone(v)
                 id = self.id[v]
                 self.ko = VNULL
+                # 如果提子了，那么这个位置将会被定义为劫,在下一步不能立马下在劫上
+                # 1.移的子个数为1、
+                # 2.该位置的sg气为1
+                # 3.该位置的sg大小为1
                 if self.remove_cnt == 1 and \
                         self.sg[id].lib_cnt == 1 and \
                         self.sg[id].size == 1:
+                    # 劫的位置定义为，被叫吃的位置
                     self.ko = self.sg[id].v_atr
 
         # 一方下完后进行记录,并切换下子方
@@ -400,20 +429,30 @@ class Board(object):
         计算得分
         :return: int
         '''
+        # 记录黑白上方的目数
         stone_cnt = [0, 0]
+        # 遍历所有棋盘位置(没有边界)
         for rv in range(BVCNT):
+            # 程序主要的都是购过ev坐标来进行的
             v = rv2ev(rv)
             c = self.color[v]
+            # 所占位置计分
             if c <= 1:
                 stone_cnt[c] += 1
+            # 争论位置
             else:
+                # 统计v位置"十"周围信息
                 nbr_cnt = [0, 0, 0, 0]
                 for d in dir4:
                     nbr_cnt[self.color[v + d]] += 1
+                # 如果白子数目>0 且 黑子数目为0, 那么这个位置算是白子的目
                 if nbr_cnt[0] > 0 and nbr_cnt[1] == 0:
                     stone_cnt[0] += 1
+                # 如果黑子数目>0 且 白子数目为0, 那么这个位置算是黑子的目
                 elif nbr_cnt[1] > 0 and nbr_cnt[0] == 0:
                     stone_cnt[1] += 1
+        print(stone_cnt)
+        # 黑目-白目-黑贴白目
         return stone_cnt[1] - stone_cnt[0] - KOMI
 
     def rollout(self, show_board=False):
@@ -435,10 +474,14 @@ class Board(object):
     def showboard(self):
         '''
         输出当前的棋盘
-        :return:
+        :return: None
         '''
 
         def print_xlabel():
+            '''
+            打印棋盘坐标 A ... J
+            :return: None
+            '''
             line_str = "  "
             for x in range(BSIZE):
                 line_str += " " + x_labels[x] + " "
@@ -451,16 +494,19 @@ class Board(object):
             line_str = str(y) if y >= 10 else " " + str(y)
             for x in range(1, BSIZE + 1):
                 v = xy2ev(x, y)
+                # 如果该v位置没有棋子,x_str == .
                 x_str = " . "
                 color = self.color[v]
+                # 如果该v位置有棋子,x_str == O/X
                 if color <= 1:
                     stone_str = "O" if color == 0 else "X"
+                    # 特殊处理上一步的显示
                     if v == self.prev_move:
                         x_str = "[" + stone_str + "]"
                     else:
                         x_str = " " + stone_str + " "
+                # 每行输出一次
                 line_str += x_str
-            #
             line_str += str(y) if y >= 10 else " " + str(y)
             stderr.write(line_str + "\n")
 
@@ -494,14 +540,20 @@ class Board(object):
     def hash(self):
         '''
         哈希算状态
-        :return:
+        :return: hash_code
         '''
         return (hash(self.color.tostring()) ^
                 hash(self.prev_color[0].tostring()) ^ self.turn)
 
 
     def info(self):
+        '''
+        返回一些MCTS中需要的信息
+        :return: 当前状态，走子数，输出决策
+        '''
+        # 空的位置
         empty_list = np.where(self.color == 2)[0]
+        # 可以下的策略
         cand_list = []
         #找到合法且不是眼的坐标（所有可行点）
         for v in empty_list:
@@ -513,5 +565,31 @@ class Board(object):
 
 
 if __name__ == '__main__':
+    # [rv2ev(i) for i in range(BVCNT)]
+    '''
+    [[ 12  13  14  15  16  17  18  19  20]
+     [ 23  24  25  26  27  28  29  30  31]
+     [ 34  35  36  37  38  39  40  41  42]
+     [ 45  46  47  48  49  50  51  52  53]
+     [ 56  57  58  59  60  61  62  63  64]
+     [ 67  68  69  70  71  72  73  74  75]
+     [ 78  79  80  81  82  83  84  85  86]
+     [ 89  90  91  92  93  94  95  96  97]
+     [100 101 102 103 104 105 106 107 108]]
+    '''
     b = Board()
+    b.play(34)      # 黑
+    b.play(100)      # 白
+
+    b.play(35)      # 黑
+    b.play(108)      # 白
+
+    b.play(25)      # 黑
+    b.play(20)      # 白
+
+    b.play(14)      # 黑
+    b.play(12)      # 白
     b.showboard()
+    print(b.score())
+
+    # b.rollout(True)

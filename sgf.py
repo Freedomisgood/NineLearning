@@ -10,14 +10,19 @@ import numpy as np
 class sgf_data(object):
 
     def __init__(self):
-        self.size = BSIZE
-        self.komi = KOMI
-        self.handicap = 0
-        self.result = 0
-        self.history = []
-        self.move_cnt = 0
+        self.size = BSIZE  # 棋盘大小
+        self.komi = KOMI   # 贴目
+        self.handicap = 0  # 让子
+        self.result = 0    # 结局
+        self.history = []  # 历史记录
+        self.move_cnt = 0  # 步数统计
 
     def sgf2ev(self, v_sgf):
+        '''
+        将sgf内容转换为ev格式
+        :param v_sgf:
+        :return:
+        '''
         if len(v_sgf) != 2:
             return (self.size + 2) ** 2
         labels = "abcdefghijklmnopqrs"
@@ -26,6 +31,11 @@ class sgf_data(object):
         return x + (self.size + 1 - y) * (self.size + 2)
 
     def import_file(self, file_path):
+        '''
+        解析单个sgf文件内容
+        :param file_path: 单个文件的文件名
+        :return:
+        '''
         f = open(file_path, 'r', encoding='utf-8')
         lines = f.readlines()
         for line in lines:
@@ -67,6 +77,11 @@ class sgf_data(object):
 
 
 def import_sgf(dir_path):
+    '''
+    读取目录下的所有sgf文件,训练learn.py中需要读取
+    :param dir_path: sgf文件目录
+    :return: list
+    '''
     dir_path += "/*.sgf"
     file_list = glob.glob(dir_path)
     sd_list = []
@@ -91,6 +106,11 @@ def import_sgf(dir_path):
 
 
 def sgf2feed(sgf_list):
+    '''
+    将读入的棋谱信息,进行对战
+    :param sgf_list: 棋谱信息
+    :return: feature, move, result
+    '''
     total_cnt = 0
     for s in sgf_list:
         total_cnt += s.move_cnt
@@ -100,6 +120,7 @@ def sgf2feed(sgf_list):
     result = np.zeros((total_cnt), dtype=np.int8)
 
     train_idx = 0
+    # 声明一个对战棋盘
     b = Board()
     for s in sgf_list:
         if s.size != BSIZE or s.handicap != 0:

@@ -271,7 +271,32 @@ pyaq.py的命令行选项如下。
 
 ![top](https://user-images.githubusercontent.com/32036527/36086412-90005ab6-100f-11e8-912b-fdf30c61b2ef.png)   
 
+https://twitter.com/ymg_aq)
+
+## 附录:
+### 围棋英文术语:
+
+- 贴目 (komi)
+- 气 (*liberty*) 
+- 叫吃 (*atari*) 
+- 劫(Ko)
+
+### 规则说明:
+
+**让子**:是围棋的一种对弈制度，指持黑子的一方先在棋盘上摆上一定数目的子之後，再由执白子的一方开始下
+
+**贴目**:指黑方由于先手，在布局上占有一定的优势，为了公平起见，在最后计算双方所占地的多少时，黑棋必须扣减一定的[目数](https://baike.baidu.com/item/目数)或子数。
+
+**劫**:如图，轮[白下](https://www.baidu.com/s?wd=白下&tn=SE_PcZhidaonwhc_ngpagmjz&rsv_dl=gh_pc_zhidao)子时，白在A位提黑一子；此时，黑不能立即回提A位的白子，必须寻找劫材，即在别处下一着，待白方应后，再回提A位的白子。但是，并非所有的劫材都会导致对方应一手，在价值判断取舍的情况下，对方也可能不应劫而解消劫争，“劫胜”也叫“消劫”。
+
+![](https://gss0.baidu.com/94o3dSag_xI4khGko9WTAnF6hhy/zhidao/pic/item/35a85edf8db1cb1301064346d054564e92584b73.jpg)
+
+
+
+
+
 ### License
+
 [MIT License](https://github.com/ymgaq/Pyaq/blob/master/LICENSE)
 
 Author:
@@ -282,12 +307,4 @@ Author:
     <img src="https://avatars3.githubusercontent.com/u/44315782?s=400&v=4" width="50px">
 </a>
 
-Thanks to origin Author: [Yu Yamaguchi](https://twitter.com/ymg_aq)
-
-## 附录:
-### 围棋英文术语:
-
-- 贴目 (komi)
-- 气 (*liberty*) 
-- 叫吃 (*atari*) 
-- 劫(Ko)
+Thanks to origin Author: [Yu Yamaguchi](
